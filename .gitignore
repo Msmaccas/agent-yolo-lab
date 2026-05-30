@@ -4,6 +4,7 @@
 *.pem
 *.token
 secrets/
+data/
 browser-profile/
 downloads/
 screenshots/
