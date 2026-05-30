@@ -1,0 +1,13 @@
+.env
+.env.*
+*.key
+*.pem
+*.token
+secrets/
+browser-profile/
+downloads/
+screenshots/
+traces/
+reports/
+node_modules/
+.DS_Store
