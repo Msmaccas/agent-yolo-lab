@@ -1,10 +1,26 @@
 # Agent YOLO Lab
 
-A small lab for running coding and research agents inside a disposable workspace.
+A disposable lab for running coding and research agents inside a controlled workspace.
 
-The main example is a global CAN SLIM / O'Neil-style stock research agent. It can read watchlists, CSV files, chart screenshots, and public data. It writes ranked reports that a human can review.
+The main example is a global CAN SLIM / O'Neil-style stock research agent. It can read watchlists, CSV files, chart screenshots, and public data, then write ranked reports for human review.
 
-The repo is built for agent work: clear folders, clear rules, clear outputs.
+It does not place trades.
+
+## Current safety posture
+
+This repository is public. Treat everything committed here as visible.
+
+Do not commit:
+
+- real broker exports
+- API keys
+- account IDs
+- private screenshots
+- real customer data
+- Gmail, Stripe, LinkedIn, or production data
+- private notes that you do not want public
+
+The `.gitignore` blocks common local/private folders such as `.env`, `data/`, `screenshots/`, `reports/`, `traces/`, `browser-profile/`, and `secrets/`.
 
 ## What this repo is for
 
@@ -16,7 +32,7 @@ Use it when you want an agent to:
 - read chart screenshots
 - process global stock watchlists
 - write reports
-- keep evidence of what it did
+- leave evidence of what it did
 
 The first serious example is:
 
@@ -24,62 +40,53 @@ The first serious example is:
 
 It ranks names by setup quality. It does not place trades.
 
-## The basic shape
+## Folder shape
 
 ```text
 agent-yolo-lab/
   AGENTS.md
   README.md
+  .gitignore
   prompts/
     canslim-global-yolo.md
+  scripts/
+    bootstrap-agent-lab.sh
+    doctor.sh
   run-canslim-yolo.sh
-  start-codex-yolo.sh
   start-codex-safe.sh
-  data/
-    tickers/
-    ohlcv/
-    fundamentals/
-    tradability/
-  screenshots/
-  fixtures/
-  evals/
-  reports/
-    symbols/
-  traces/
+  start-codex-yolo.sh
+  data/              # ignored, local only
+  screenshots/       # ignored, local only
+  reports/           # ignored, local only
+  traces/            # ignored, local only
+  browser-profile/   # ignored, local only
+  secrets/           # ignored, local only
 ```
 
-## First-time setup
+## First-time setup in GitHub Codespaces
 
-Open the repo in a disposable workspace.
+1. Open the repo on GitHub.
+2. Press the green `Code` button.
+3. Press `Codespaces`.
+4. Press `Create codespace on main`.
+5. Wait until VS Code in the browser opens.
+6. Open `Terminal` -> `New Terminal`.
 
-Good choices:
-
-- GitHub Codespace
-- VM
-- VPS snapshot
-- throwaway container
-- clean local folder made only for this lab
-
-Clone the repo:
+Then run:
 
 ```bash
-git clone https://github.com/Msmaccas/agent-yolo-lab.git
-cd agent-yolo-lab
-```
-
-Make the scripts runnable:
-
-```bash
+cd /workspaces/agent-yolo-lab
+git pull
 chmod +x *.sh scripts/*.sh 2>/dev/null || true
-```
-
-Create the folders:
-
-```bash
 ./scripts/bootstrap-agent-lab.sh
+./scripts/doctor.sh
 ```
 
-Check Codex is available:
+If `doctor.sh` says Codex is missing, install Codex CLI, reopen the terminal, then run the doctor check again.
+
+## Codex CLI check
+
+Run:
 
 ```bash
 codex --version
@@ -87,33 +94,49 @@ codex --version
 
 If that prints a version, continue.
 
-If it says `command not found`, install Codex CLI first, then open a new terminal and run the check again.
-
-## Run Codex in YOLO mode
-
-Use this inside the repo root:
+If it says `codex: command not found`, install Codex CLI using the current official OpenAI Codex CLI instructions, then open a new terminal and run:
 
 ```bash
-cd agent-yolo-lab
+codex --version
+```
+
+## Safer high-power mode
+
+Use this first:
+
+```bash
+cd /workspaces/agent-yolo-lab
+./start-codex-safe.sh
+```
+
+This runs Codex with workspace-write permissions and approval on request.
+
+Use this mode for normal repo repair, app building, prompt improvement, tests, docs, and report generation.
+
+## True YOLO mode
+
+Use this only inside a disposable runner such as a Codespace, VM, VPS snapshot, or throwaway container.
+
+```bash
+cd /workspaces/agent-yolo-lab
 export AGENT_YOLO_ISOLATED_RUNNER=YES
 ./start-codex-yolo.sh
 ```
 
-That starts Codex with:
+This runs:
 
 ```bash
 codex --yolo --search
 ```
 
-Use this when the workspace is disposable and the task is allowed to move fast.
+Do not run YOLO from your Mac home folder, Desktop, Documents, Downloads, iCloud, normal browser profile, broker folder, production app, or anything with live money.
 
 ## Run the CAN SLIM global agent
-
-This is the main example.
 
 From the repo root:
 
 ```bash
+cd /workspaces/agent-yolo-lab
 export AGENT_YOLO_ISOLATED_RUNNER=YES
 ./run-canslim-yolo.sh
 ```
@@ -124,9 +147,7 @@ That feeds this prompt into Codex:
 prompts/canslim-global-yolo.md
 ```
 
-The agent should inspect the repo, build or improve the engine, run tests, and write reports.
-
-Expected outputs:
+Expected local outputs:
 
 ```text
 reports/watchlist_ranked.md
@@ -137,9 +158,11 @@ reports/chart_rubric.md
 reports/symbols/<symbol>.json
 ```
 
+These outputs are ignored by git by default because reports may contain private watchlist information.
+
 ## Give it a watchlist
 
-Create a simple file:
+Create a local-only watchlist:
 
 ```bash
 mkdir -p data/tickers
@@ -147,15 +170,16 @@ cat > data/tickers/global_watchlist.csv <<'EOF'
 symbol,exchange,notes
 AAPL,NASDAQ,US mega-cap example
 ASML,AMS,Europe semiconductor example
-9988,HKEX,Hong Kong ADR/local example
-7203,TSE,Japan auto example
-BHP,ASX,Australia resources example
+9988,HKEX,Hong Kong example
+7203,TSE,Japan example
+BHP,ASX,Australia example
 EOF
 ```
 
 Then run:
 
 ```bash
+export AGENT_YOLO_ISOLATED_RUNNER=YES
 ./run-canslim-yolo.sh
 ```
 
@@ -174,7 +198,7 @@ date,open,high,low,close,volume
 2025-01-02,100,105,99,104,1234567
 ```
 
-File names can be simple:
+Example filenames:
 
 ```text
 data/ohlcv/AAPL.csv
@@ -232,14 +256,15 @@ The agent should say when a screenshot is too poor to trust.
 
 For each symbol, it should classify:
 
-- price versus 52-week high
+- current price
+- distance from 52-week high
 - relative strength proxy
 - EPS growth
 - sales growth
 - annual EPS trend
 - ROE
 - debt/equity
-- sponsorship
+- fund sponsorship
 - buyback
 - industry or group strength
 - market direction
@@ -294,9 +319,7 @@ Rank | Symbol | Label | Confidence | Why
 
 ## Use GPT agent on this repo
 
-Use a GPT coding agent when you want the repo changed from ChatGPT or Codex Web.
-
-Give it this instruction:
+Give a coding agent this instruction:
 
 ```text
 Open the latest version of Msmaccas/agent-yolo-lab. Read README.md, AGENTS.md, and prompts/canslim-global-yolo.md first. Then run the CAN SLIM global research task exactly as described. Keep all work inside this repo. Create or update tests and reports. Do not touch broker accounts, emails, public posting, production services, or live trading. End with files changed, tests run, ranked report path, missing data, and the next command I should run.
@@ -310,22 +333,6 @@ export AGENT_YOLO_ISOLATED_RUNNER=YES
 ```
 
 If it cannot run shell commands, tell it to edit the repo and create a pull request.
-
-## Use Codex CLI on this repo
-
-From the repo root:
-
-```bash
-export AGENT_YOLO_ISOLATED_RUNNER=YES
-codex --yolo --search < prompts/canslim-global-yolo.md
-```
-
-Or use the wrapper:
-
-```bash
-export AGENT_YOLO_ISOLATED_RUNNER=YES
-./run-canslim-yolo.sh
-```
 
 ## Paste-ready YOLO prompt
 
@@ -396,12 +403,6 @@ Useful permissions:
 - screenshots folder
 - `.env` outside git
 
-## Local operator shell
-
-Goose or OpenClaw can sit beside Codex if you want local computer-use control.
-
-Keep the same rule: one disposable workspace, one clear task, written outputs.
-
 ## Critic agents
 
 Use a second model to review the work.
@@ -430,7 +431,7 @@ reports/chart_rubric.md
 reports/symbols/*.json
 ```
 
-And the final message should answer:
+The final message should answer:
 
 ```text
 What changed?
@@ -444,7 +445,12 @@ What should I do next?
 ## One clean demo
 
 ```bash
-cd agent-yolo-lab
+cd /workspaces/agent-yolo-lab
+
+git pull
+chmod +x *.sh scripts/*.sh 2>/dev/null || true
+./scripts/bootstrap-agent-lab.sh
+./scripts/doctor.sh
 
 mkdir -p data/tickers
 cat > data/tickers/global_watchlist.csv <<'EOF'
